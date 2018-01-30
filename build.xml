@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="IBE" basedir="." default="publish-local" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<!-- used for release notes, manifest files etc. -->
+	<property name="marketing.name" value="t-Retail IBE"/>
+		
+	<property file="${basedir}/build.properties"/>
+	
+	<!-- If common-build.xml does not exist run "retrieve" target in retrieve-common-build-files.xml -->
+	<import file="${common.build.dir}/ant/common-build.xml"/>
+	
+	<!-- Directory declarations -->
+	<property name="build.jars.dir" location="${build.dir}/jars"/>
+	<property name="build.deployment.dir" location="${build.dir}/deployment"/>
+	
+	<!-- Tar source directory declarations -->
+	<property name="xrez.dir" location="${basedir}/xRez"/>
+	<property name="ibe.dir" location="${xrez.dir}/ibe"/>  
+	<property name="theme.dir" location="${xrez.dir}/theme"/>
+	<property name="static.dir" location="${xrez.dir}/static"/>
+	
+	<!-- Product types -->
+	<property name="ibe.name" value="ibe"/>
+	<property name="theme.name" value="theme"/>
+	<property name="static.name" value="static"/>
+	<!-- language translation-->
+	<property name="language-translation.name" value="language-translation"/>
+	
+	<!-- Online ibe docmentation -->
+	<property name="ibedocs.dir" location="${basedir}/docs/ibedocs"/>
+	<property name="ibe-docs.name" value="ibe-docs"/>
+	<property name="ibe-docs.tar" value="${ibe-docs.name}.tar.gz"/>
+	
+	<!-- Release tar names -->
+	<property name="ibe-xdist.tar" value="IBE-xdist.tar.gz"/>
+	
+	<property name="utilityjar.name" value="openjaw-ibe.jar"/>
+	<property name="test.results.server" value="root:123456@192.168.10.68:/srv/www/htdocs"/>
+	
+	<property name="tools.dir" value="${basedir}/tools"/>
+	<property name="build.tools.dest" location="${build.dir}/tools"/>
+	
+	<condition property="test.prop.file" else="openjaw_test.properties">
+	   <isset property="test.prop.file"/> 	
+	</condition>
+	
+	<!-- =============================================================================== -->
+	<!-- Cleans all intermediate build files						     		                    														 -->
+	<!-- =============================================================================== -->
+	<target name="clean">
+		<!-- Delete any previous deployments -->
+		<delete dir="${build.dir}"/>
+		<!-- Delete any previous release -->
+        <delete dir="${dist.dir}"/>
+        <delete dir="${ibedocs.dir}"/>
+		<delete dir="${ivy.dir}/IBE"/>
+	</target>
+	
+	<!--This is a custom ant task for finding missing language tags-->
+	<!-- we need to depend on jar because we need to make sure that the our source code is compiled
+	this particular target may be run outside of the deployment-->
+	<target name="FindMissingLanguageTags" depends="jar">
+		<!--the source code for this task can be found in src/com/openjaw/anttask/FindMissingLanguageTags.java-->
+		<taskdef name="FindMissingLanguageTags" classname="com.openjaw.anttask.FindMissingLanguageTags">
+			<classpath>
+				<!--you need this classpath so that your java class has access to all of its imports-->
+				<path refid="openjaw.common.classpath" />
+				<!--when you add files into src diretory they get compiled into the following jar, 
+				it needs to be included for if you want ant to find your class--> 
+				<pathelement location="${build.jars.dir}/${utilityjar.name}" />
+			</classpath>
+		</taskdef>
+		<echo>Looking For Missing Language Tags in ${autodeploy.dir}</echo>
+		<!-- The name for this task is purely arbitrary, you can call it anything as long as it's consistent with
+		the taskdef above, the attributes dir and outputfile must match setter methods in your java class-->
+		
+		<FindMissingLanguageTags dir="${autodeploy.ibe.dir}" outputfile="${basedir}/MissingTags.txt"/>
+		<echo>Saving output to ${basedir}/MissingTags.txt</echo>
+	</target>
+	
+	<!-- =================================================================== -->
+    <!-- Stores version numbers of the common JARs we build/compile with     -->
+    <!-- in the openjaw-xrez.jar (for runtime version verification).         -->
+    <!-- =================================================================== -->
+    <target name="versiontag" description="Tag release with common JAR version number.">
+        <echo>Linking release to current OpenJawCommon version.</echo>
+        <tagversion class="com.openjaw.ibe.CommonVersion" dir="${src.dir}"/>
+    </target>
+	
+	<!-- =================================================================== -->
+	<!-- Compile the java source code                                        -->
+	<!-- =================================================================== -->
+	<target name="compile" depends="init, versioninc, versiontag">
+        <echo>Compiling Java source code</echo>
+        <javac source="1.6" target="1.6" srcdir="${src.dir}" destdir="${build.dir}" debug="${debug}" encoding="UTF-8" includeantruntime="false">
+            <src path="${src.dir}"/>  
+            <classpath>
+                <path refid="openjaw.common.classpath"/>
+            </classpath>
+        </javac>
+	</target>
+	
+	<!-- =============================================================================== -->
+	<!-- Builds a new tar of the xRez theme content					     		           							         						 -->
+	<!-- =============================================================================== -->
+	<target name="tar-xdist">
+		<echo>tar SPNR actions</echo>
+		<tar destfile="${dist.dir}/${ibe-xdist.tar}" compression="gzip" longfile="gnu">
+			<tarfileset prefix="xDistributor/config/openjaw/Supplier/SPNR/ibe/config/superPNRXSL" 
+				dir="xRez/ibe/config/superPNRXSL">
+				<include name="**/*"/>
+			</tarfileset>
+			<tarfileset prefix="xDistributor/config/openjaw/Supplier/SPNR/ibe/config/itinerary" 
+				dir="xRez/ibe/config/itinerary">
+				<include name="**"/>
+			</tarfileset>
+			<tarfileset prefix="xDistributor/config/openjaw/Supplier/SPNR/ibe/bookingManagement/config/xsl" 
+				dir="xRez/ibe/bookingManagement/config/xsl">
+				<include name="**/OTA_AirDemandTicketRQ.xsl"/>
+				<include name="**/HU_RefundAutoReviewEligibilityRQ.xsl"/>
+				<include name="**/GenerateEasyPay.xsl"/>
+				<include name="**/modifyAirCancelCostRS.xsl"/>
+			</tarfileset>
+			<tarfileset prefix="xDistributor/config/openjaw/Supplier/CLCNTRL/xsl" 
+				dir="xRez/ibe">
+				<include name="**/*/config/xsl/generatePackageParts.xsl"/>
+			</tarfileset>
+		</tar>
+	</target>
+	
+	<target name="release-increase-build-number" description="Increases build number." depends="include-oj-anttasks">
+		<mkdir dir="${dist.dir}"/>
+		
+		<incrementversion 
+			file="${java.version.file}"
+			versionFile="${dist.dir}/version.txt"
+			buildType="${release.type}"
+			product="${marketing.name}"
+			branchname="${ivy.branch}">
+			<filelist description="${marketing.name}" dir="${basedir}">
+				<file name="${manifest.file}"/>
+			</filelist>
+		</incrementversion>
+		
+        <!-- The inc-version ant task writes the new version number to a  -->
+        <!-- file. We must read this version number into an ant property. -->
+        <loadfile property="version" srcFile="${dist.dir}/version.txt"/>
+        <tstamp prefix="build-date">
+            <format property="BUILD-DATE" pattern="MMMM dd, yyyy HH:mm:ss"/>
+        </tstamp>
+        <echo message="The version number and build date for this release is ${version} (${build-date.BUILD-DATE})"/>
+    
+        <!-- Store the version and build date into the application config so that it can be viewed in the xRez source -->
+        <replace file="${ibe.dir}/common/config/system/ibe.xml" token="@RELEASE_VERSION@" value="${version} (${build-date.BUILD-DATE} - Release)"/>
+        <replace file="${ibe.dir}/common/config/system/ibe.xml" token="@VERSION@" value="${version}"/>
+		
+		<echo message="The version number for this release is ${version}"/>
+		<!-- Check in the source file containing the version number. -->
+		<echo>Checking updated version file into Git repository.</echo>
+		<git-add src=".">
+			<FileSet file="${java.version.file}"/>
+		</git-add>
+		
+		<if>
+			<not>
+				<equals arg1="${release.offline}" arg2="true"/>
+			</not>	
+			<then>
+				<antcall target="git-push">
+					<param name="push.src" value="."/>
+					<param name="push.message" value="Bug:00000;Description:Checking in version information for Online release ${version}"/>
+					<param name="push.tags" value="false"/>
+					<param name="push.allbranches" value="false"/>
+				</antcall>
+			</then>
+		</if>
+	</target> 
+	
+    <target name="replace-ibe-xml" depends="include-oj-anttasks">
+    	<echo>Replace ibe.xml with its local repo for next release...</echo>
+    	<!-- when doing release, every time after the war target, we need to replace ibe.xml with its local repo -->
+    	<git-checkout src="." branch="${ivy.branch}">
+    		<fileSet file="${ibe.dir}/common/config/system/ibe.xml"/>
+    	</git-checkout>
+    </target>
+	
+	<target name="war">
+		<!-- main ibe -->
+		<war destfile="${dist.dir}/ibe.fragment" needxmlfile='false'>
+		  <fileset dir="${ibe.dir}">
+  
+		  </fileset>
+		</war>		
+		<!-- theme war -->
+		<war destfile="${dist.dir}/theme.war" needxmlfile='false'>
+		  <fileset dir="${theme.dir}">
+			<exclude name="**/ReadMe.txt"/>
+		  </fileset>
+		</war>		
+		<!-- static war -->
+		<war destfile="${dist.dir}/static.fragment" needxmlfile='false'>
+		  <fileset dir="${static.dir}">
+			<exclude name="**/ReadMe.txt"/>
+		  </fileset>
+		</war>
+        <antcall target="replace-ibe-xml"/>
+	</target>
+	
+	<target name="package" description="Packaging distribution" depends="init, jar, tar-xdist, tar-ibe-docs, war"/>
+	
+	<target name="versioninc.${versioninc.type}">
+		<echo>Increasing minor-minor version number for development release.</echo>
+		<incversion product="${marketing.name}" file="${java.version.file}" buildType="Development" branchname="${ivy.branch}">
+			<filelist description="${marketing.name}" dir=".">
+				<file name="${manifest.file}"/>
+			</filelist>	
+		</incversion>
+		
+		<property name="project.version.file" location="${basedir}/${version.file.path}"/>
+	
+		<echo>Project Version file: ${project.version.file}</echo>
+		
+		<loadfile property="version.file" srcFile="${project.version.file}"/>
+		<propertyregex property="major.version" input="${version.file}" regexp="MajorVersion=&quot;([^&quot;]+)&quot;" select="\1"/>
+		<propertyregex property="minor.version" input="${version.file}" regexp="MinorVersion=&quot;([^&quot;]+)&quot;" select="\1"/>
+		<propertyregex property="minor.minor.version" input="${version.file}" regexp="MinorMinorVersion=&quot;([^&quot;]+)&quot;" select="\1"/>
+		<property name="project.version" value="${major.version}.${minor.version}.${minor.minor.version}"/>
+		
+        <tstamp prefix="build-date">
+            <format property="BUILD-DATE" pattern="MMMM dd, yyyy HH:mm:ss"/>
+        </tstamp>
+        <echo message="The version number and build date for this development release is ${project.version} (${build-date.BUILD-DATE})"/>
+    
+        <!-- Store the version and build date into the application config so that it can be viewed in the xRez source -->
+        <replace file="${ibe.dir}/common/config/system/ibe.xml" token="@RELEASE_VERSION@" value="${project.version} (${build-date.BUILD-DATE} - Development)"/>
+        <replace file="${ibe.dir}/common/config/system/ibe.xml" token="@VERSION@" value="${project.version}"/>
+	</target>
+	
+	<!-- Convient target to compile all tests -->
+	<target name="compile-tests" depends="">
+        <!--ant antfile="test.xml" description="Test build file" target="compile-gui-tests"/-->
+		<!--ant antfile="test.xml" description="Test build file" target="compile-xml-tests"/-->
+		<ant antfile="test.xml" description="Test build file" target="compile-junit-tests"/>
+	</target>	
+
+	<target name="run-gui-tests" description="Run GUI tests" depends="compile-tests">
+		<ant antfile="test.xml" description="Test build file" target="run-gui-tests">
+			<!-- This property is supplied at runtime -->
+			<property name="test.prop.file" value="${test.prop.file}" />
+			<!-- Required to run xRezAgent GUI tests -->
+			<property name="build.xrezagent.dir" value="${build.xrezagent.dir}" />
+			<!-- Required to locate IBE deployment TAR -->
+			<property name="components.dir" value="${components.dir}" />
+		</ant>
+	</target>
+	
+	<!-- =================================================================== -->
+	<!-- Compiles the json tests												 -->
+	<!-- =================================================================== -->
+	<target name="compile-json-tests" description="Compiles the JSON test source files.">
+	    <echo>Compiling JSON tests source</echo>
+		<ant antfile="test.xml" description="Test build file" target="compile-json-tests">
+		      <!-- This property is supplied at runtime -->
+		      <property name="test.prop.file" value="${test.prop.file}"/>
+		      <!-- Required to locate IBE deployment TAR -->
+		      <property name="components.dir" value="${components.dir}"/>
+		</ant>
+	</target>
+	
+	<!-- =================================================================== -->
+	<!-- Run the json tests												 -->
+	<!-- =================================================================== -->
+	<target name="run-json-tests" description="Run JSON tests">
+	        <ant antfile="test.xml" description="Test build file" target="run-json-tests">
+	            <!-- This property is supplied at runtime -->
+	            <property name="test.prop.file" value="${test.prop.file}"/>
+	            <!-- Required to locate IBE deployment TAR -->
+	            <property name="components.dir" value="${components.dir}"/>
+	        </ant>
+	</target>
+	
+	<target name="publish-gui-tests" depends="">
+		<ant antfile="test.xml" description="Test build file" target="publish-gui-test-results">
+			<!-- This property is supplied at runtime -->
+			<property name="test.prop.file" value="${test.prop.file}" />
+			<property name="test.results.server" value="${test.results.server}"/>
+		</ant>
+	</target>
+	
+	<target name="publish-junit-tests">
+		<ant antfile="test.xml" description="Test build file" target="publish-junit-test-results">
+			<!-- This property is supplied at runtime -->
+			<property name="test.prop.file" value="${test.prop.file}" />
+			<property name="test.results.server" value="${test.results.server}"/>
+		</ant>
+	</target>
+	
+	<!-- Target that can be used to pull down the latest tests from -->
+	<!-- the other dependant projects                               -->
+	<target name="get-gui-tests" description="pulls down the gui tests from all projects and puts all the configs in test dir">
+		<ant antfile="test.xml" description="Test build file" target="get-gui-tests"/>
+	</target>
+	
+	<!-- =================================================================== -->
+	<!-- package up     											 		 -->
+	<!-- =================================================================== -->
+	<target name="package-tests" description="Creating the distribution file">
+		<echo>------------------------------------------------------------------------------------------------------</echo>
+		<echo>Creating tests package...   							  											</echo>
+		<echo>------------------------------------------------------------------------------------------------------</echo>
+		
+		<echo>Bundling all tests from ${build.packaging.dir}</echo>
+		<tar longfile="gnu" destfile="${build.packaging.dir}/test-src.tar">
+			<tarfileset dir="${basedir}/test">
+				<exclude name="data/*" />
+				<exclude name="properties/*" />
+			</tarfileset>
+		</tar>	
+	</target>	
+
+	<!-- ================================================================	-->
+	<!-- Test for compilation bugs in jsp              						-->
+	<!-- ================================================================== -->
+	<target name="testJSP" description="Pre-compiles all of the jsp to check that they compile, they are never actually used">
+		<echo>Converting the jsp to java files and compiling them</echo>
+		<ant dir="${build.deployment.dir}" antfile="${build.deployment.dir}/deploy.xml" inheritAll="false" target="compileJSP">
+			<property name="environment.cust" value="${deploy.environment.cust}" />
+		</ant>
+	</target>
+	
+	<!-- =================================================================== -->
+	<!-- Test for compilation bugs in xsl                    				 -->
+	<!-- =================================================================== -->
+	<target name="testXSL" description="Pre-compiles all of the xsl to check that they compile, they are never actually used">
+		<echo>Compiling the xsl</echo>
+		<ant dir="${build.packaging.dir}" antfile="${build.packaging.dir}/deploy.xml" inheritAll="false" target="compileXSL">
+			<property name="environment.cust" value="${deploy.environment.cust}" />
+		</ant>
+	</target>
+	
+	<!-- ================================================================== -->
+	<!-- Calls the ant task to run the page map comparsons                  -->
+	<!-- ================================================================== -->
+	
+	<target name="compare-pagemaps">
+		<ant antfile="test.xml" description="Compare page maps" target="compare-pagemaps"/>
+	</target>
+	
+    <!-- ============================================================================================ -->
+    <!-- Builds an ibe-docs tar which is published as an IVY artifact containing schema documentation -->
+    <!-- ============================================================================================ -->
+    <target name="tar-ibe-docs" depends="init">
+        <echo>Generating IBE API on-line documentation.</echo>
+    	
+        <!-- Classpath and endorsed classpaths -->
+        <ivy:cachepath pathid="openjaw.schema.classpath" conf="ibe-lib" type="jar"/> 
+        <ivy:cachepath pathid="openjaw.endorsed.classpath" conf="endorsed" type="jar"/>
+        <property name="classpath" refid="openjaw.schema.classpath"/>
+        <property name="endorsedClasspath" refid="openjaw.endorsed.classpath"/>
+
+        <echo>Generating documentation HTML pages, output directory: ${ibedocs.dir}</echo>
+    	<java classname="com.openjawx.xRez.schema.SchemaDocumentation" fork="true">
+            <arg value="${basedir}/docs/SchemaDocumentation.xml"/>
+            <classpath>
+                 <pathelement path="${classpath}"/>
+                 <pathelement path="${endorsedClasspath}"/>
+            </classpath>
+    		<sysproperty key="OutputDir" value="${ibedocs.dir}"/>
+        </java>
+
+    	<echo>Adding process flow diagrams.</echo>
+        <copy todir="${basedir}/docs/ibedocs" overwrite="true">
+            <fileset dir="${basedir}/docs/ProcessFlows">
+                <include name="*.jpg"/>
+                <include name="*.png"/>
+            </fileset>
+        	<fileset dir="${basedir}/docs/RenderingFile" erroronmissingdir="false">
+        	     <include name="*.js"/>
+        	     <include name="*.css"/>
+        	</fileset>
+        </copy>
+    	
+    	<echo>Adding JSON Sample Request/Response file.</echo>
+        <copy todir="${basedir}/docs/ibedocs" overwrite="true">
+            <fileset dir="${basedir}/docs/">
+                <include name="sampleJSON/**/*.html"/>
+            </fileset>
+        </copy>
+    	
+		<!-- 3rd Party Javascript/CSS -->
+		<echo>Retrieving 3rd party libraries required for schemadocs</echo>
+		<ivy:retrieve conf="schemadocs" type="js" pattern="${ibedocs.dir}/[artifact].[ext]" log="${ivy.resolve.log}"/>
+		<ivy:retrieve conf="schemadocs" type="zip" pattern="${ibedocs.dir}/[artifact].[ext]" log="${ivy.resolve.log}"/>
+		
+		<!-- 3rd Party Javascript -->
+		<echo>Unzipping bootstrap distribution</echo>
+		<unzip dest="${ibedocs.dir}">
+			<fileset dir=".">
+				<include name="**/*.zip"/>
+			</fileset>
+		</unzip>
+		
+		<!-- 3rd Party Javascript -->
+		<echo>Deleting bootstrap zip</echo>
+		<delete dir="**/*.zip"/>
+
+    	<echo>Bundling IBE API documentation into ${dist.dir}/${ibe-docs.tar}</echo>
+        <tar destfile="${dist.dir}/${ibe-docs.tar}" compression="gzip">
+			<tarfileset dir="${ibedocs.dir}">
+				<include name="**/*"/>
+			</tarfileset>
+        </tar>
+    </target>
+	
+	<!-- =================================================================== -->
+	<!-- Run the unit tests												 -->
+	<!-- =================================================================== -->
+	 <target name="run-junit-tests" description="Run Unit tests" depends="jar">
+	        <ant antfile="test.xml" description="Test build file" target="run-junit-tests">
+	            <!-- This property is supplied at runtime -->
+	            <property name="test.prop.file" value="${test.prop.file}" />
+	        </ant>
+	 </target>
+	
+	<target name="checkSchema" depends="compile-tools" description="validates all attributes have types defined">
+		<taskdef name="attributeCheck" classname="SchemaAttributeChecker">
+			<classpath id="schemaclasspath">
+				<pathelement path="${build.tools.dest}"/>
+				<fileset dir="${tools.dir}/lib">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</taskdef>
+		
+		<pathconvert property="schemaclasspathProp" refid="schemaclasspath"/>
+		
+		<echo>Classpath is ${schemaclasspathProp}</echo>
+		<echo>Testing if all attributes are valid.</echo>
+		<attributeCheck test="${basedir}"/>
+	</target>
+	
+	<target name="compile-tools" depends="init">
+		<echo>Compiling Code for validation...</echo>
+		<delete dir="${build.tools.dest}"/>
+		<mkdir dir="${build.tools.dest}"/>
+		
+		<javac srcdir="${tools.dir}" destdir="${build.tools.dest}" debug="true" deprecation="off">
+			<classpath>
+				<pathelement path="${java.class.path}/"/>
+				<fileset dir="${tools.dir}/lib">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+</project>
