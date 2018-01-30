@@ -1,0 +1,98 @@
+<ivy-module version="1.0">
+    <info organisation="openjaw" module="ts_ibe" status="release"/>
+    <configurations>
+    	<!-- Build configurations -->
+        <conf name="build" description="Classes used in jar compilation"/>
+        <conf name="web-inf" description="libraries to be included in WEB-INF/lib directories"/>
+        <conf name="lib-compress" description="Third party libraries used in css an js compression"/>
+		<conf name="tar" description="Distribution tars"/>
+		<conf name="xdist-home" description="Configuration required to populate the xDistributor home"/>
+		<conf name="jar" description="Distribution jars"/>
+		<conf name="war-fragment" description="War fragment distributions"/>
+		<!-- Deployment configurations -->
+		<!-- tars -->
+		<conf name="xrez-tar" description="Configuration for xRez tar"/>
+		<conf name="xlocation-xrez-tar" description="Configuration for xLocation tar"/>
+		<conf name="xpromotion-xrez-tar" description="Configuration for xPromotion tar"/>
+		<conf name="xrezagent-xrez-tar" description="Configuration for xRezAgent tar"/>	
+		<!--jars -->
+		<conf name="ibe-lib" description="Configuration for ibe jars"/>
+		<conf name="xrez-jar" description="Configuration for xRez jars" extends="ibe-lib"/>
+		<conf name="xlocation-jar" description="Configuration for xLocation jars" extends="ibe-lib"/>
+		<conf name="xpromotion-jar" description="Configuration for xPromotion jars" extends="ibe-lib"/>
+		<conf name="xrezagent-jar" description="Configuration for xRezAgent jars" extends="ibe-lib"/>
+		<conf name="webserver" description="libraries to be included in webserver. E.g. tomcat/common/lib only"/>
+		<!--endorsed -->
+		<conf name="endorsed" description="Configuration for endorsed jars"/>
+		<!-- javascript -->
+		<conf name="scriptaculous" description="Configuration for javascript"/>
+		<conf name="javascript" description="Configuration for javascript"/>
+		
+		<conf name="test-src" description="Configuration for IBE test files"/>
+		<conf name="ibe-test-xml" description="Configuration for IBE test.xml file"/>
+		<conf name="src" description="Source files for this build"/>
+		
+		<!-- schema documentation -->
+		<conf name="schemadocs" description="Configuration for schemadocs"/>
+		
+		<conf name="common-build" description="Common build files"/>
+    </configurations>
+    <publications>
+		<artifact name="IBE-xdist" type="tar" ext="tar.gz" conf="xdist-home"/>
+		<artifact name="ibe" type="war" ext="fragment" conf="war-fragment"/>
+		<artifact name="ibe-docs" type="tar" ext="tar.gz" conf="tar"/>
+		<artifact name="theme" type="war" ext="war" conf="war-fragment"/>
+		<artifact name="static" type="war" ext="fragment" conf="war-fragment"/>
+		<artifact name="openjaw-ibe" type="jar" ext="jar" conf="build, jar, web-inf"/>
+    </publications>
+    <dependencies>
+    	<!-- Build -->
+		<dependency org="openjaw" name="commons" rev="latest.release" force="true" branch="team_travelsky_main_master" conf="build->build; ibe-lib->web-inf" changing="true"/>
+		<dependency org="openjaw" name="xrez" rev="latest.release" force="true" branch="team_travelsky_main_master" conf="build->build" changing="true"/>
+    	<dependency org="net.sf" name="ant-contrib" rev="1.0b3" conf="build->default;lib-compress->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.yahoo" name="yuicompressor" rev="2.4.2" conf="lib-compress->default,licence;"/>
+
+		<dependency org="openjaw" name="travelsky-common" rev="latest.integration" branch="hu_dev" conf="build->build; common-build->common-build" changing="true"/>
+
+		<dependency org="openjaw" name="xlocation" rev="latest.release" branch="team_travelsky_main_master" conf="build->build" changing="true"/>
+		
+		<!-- Deployment -->
+		<dependency org="openjaw" name="xrez" rev="latest.release" force="true" branch="team_travelsky_main_master" conf="ibe-lib->web-inf; jar->web-inf; xrez-tar->tar; webserver->webserver" changing="true"/>
+		<dependency org="org.tuckey" name="urlrewrite" rev="3.2.0" conf="ibe-lib->default,licence;jar->default,licence;ibe-lib->licence;"/>
+		<dependency org="openjaw" name="xpromotion" force="true" branch="team_travelsky_main_master" rev="latest.integration" conf="ibe-lib->jar;" changing="true"/>
+
+		<dependency org="openjaw" name="ts_servicing" rev="latest.integration" branch="main_dev" conf="ibe-lib->jar;xrezagent-xrez-tar->xrezagent-console" changing="true"/>
+		<dependency org="openjaw" name="xlocation" rev="latest.release" force="true" branch="team_travelsky_main_master" conf="ibe-lib->jar;xlocation-xrez-tar->xlocation-xrez" changing="true"/>
+		<dependency org="openjaw" name="xorg" rev="1.6.+" conf="ibe-lib->jar" changing="true"/>
+        <dependency org="net.oauth" name="oauth" rev="1.0" conf="ibe-lib->default,licence;jar->default,licence;ibe-lib->licence;"/> 
+		
+		<!--Endorsed -->
+		<dependency org="openjaw" name="commons" rev="latest.release" force="true" branch="team_travelsky_main_master"  conf="endorsed->endorsed" changing="true"/>
+		
+		<!-- Required for json flows -->
+		<dependency org="openjaw" name="openjaw-t2-json" rev="0.9.+" conf="build->jar" changing="true"/>
+	
+		<!-- 3rd party Javascript Libraries-->
+		<dependency org="script.aculo.us" name="scriptaculous" rev="1.8.2" conf="scriptaculous->default,licence;ibe-lib->licence;"/>
+		<dependency org="script.aculo.us" name="select" rev="1.5.0" conf="scriptaculous->default,licence;ibe-lib->licence;"/>
+		<dependency org="org.prototypejs" name="prototype" rev="1.6.0.3" conf="scriptaculous->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.renderjsonFD" name="renderjsonb" rev="1.2.2" conf="javascript->default,licence;ibe-lib->licence;"/> 
+		<dependency org="com.xilinus" name="prototype-window" rev="1.3" conf="scriptaculous->default,licence;ibe-lib->licence;"/>
+		<dependency org="net.sf" name="xmlw3cdom" rev="3.1" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="defunkt.io" name="facebox" rev="1.1" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.barelyfitz" name="tabber" rev="1.1" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.jquery" name="jquery" rev="1.2.3" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.jquery" name="jquery.bgiframe" rev="2.1" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.jquery" name="jquery.dimensions" rev="1.0b2" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.jquery" name="jquery.simplemodal" rev="1.1.1" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.jquery" name="jquery.tooltip.pack" rev="1.2" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.jquery" name="jquery.blockui" rev="2.38" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.mochi.github" name="MochiKit" rev="1.4.2" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.google" name="time-tracker" rev="2011-04" conf="javascript->default,licence;ibe-lib->licence;"/>
+		<dependency org="com.google" name="zxing" rev="3.2.1" conf="build->default,licence;ibe-lib->licence;"/>
+		
+		<!-- 3rd party libraries required for schema documentation -->
+        <dependency org="com.jquery" name="jquery" rev="1.11.3" conf="build->default,licence;schemadocs->default"/>  
+        <dependency org="twitter.bootstrap" name="bootstrap" rev="3.3.6" conf="build->default,licence;schemadocs->default"/>
+    </dependencies>
+</ivy-module>
