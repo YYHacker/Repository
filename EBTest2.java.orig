@@ -12,7 +12,7 @@ public class EBTest2 {
 <<<<<<< HEAD
 		av.setConnectionInfo("10.221.136.60", 7001);
 =======
-		av.setConnectionInfo("10.221.136.60", 8080);
+		av.setConnectionInfo("10.221.136.60", 9090);
 >>>>>>> main_dev
 		av.setAgentInfo("SCH115", "0", "20");
 		av.setAppName("3uairetn1");
