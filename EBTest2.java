@@ -9,7 +9,7 @@ public class EBTest2 {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		AV av = new AV();
-		av.setConnectionInfo("10.221.136.60", 6891);
+		av.setConnectionInfo("10.221.136.60", 8080);
 		av.setAgentInfo("SCH115", "0", "20");
 		av.setAppName("3uairetn1");
 		try {
