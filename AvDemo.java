@@ -33,7 +33,7 @@ public class AvDemo {
 					System.out.println("查询信息如下：");
 					System.out.print("出发城市："+avItem.getOrgcity(j)+"/"+"到达城市："+avItem.getDstcity(j));
 					System.out.print("出发时间："+avItem.getDepdate(j)+"/"+avItem.getDeptime(j));
-					System.out.print("航班号："+avItem.getAirline(j));
+					System.out.println("航班号："+avItem.getAirline(j));
 				}
 			}
 
