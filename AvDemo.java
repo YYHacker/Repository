@@ -12,7 +12,11 @@ import com.travelsky.ibe.client.pnr.DETRTKTResult;
 public class AvDemo {
 	public static void main(String[] args) {
 		AV av = new AV();
+<<<<<<< HEAD
 		av.setConnectionInfo("10.221.136.60", 7001);//设置ip端口
+=======
+		av.setConnectionInfo("10.221.136.60", 8080);//设置ip端口
+>>>>>>> main_dev
 		av.setAgentInfo("SCH115", "0", "20");//设置代理人信息
 		av.setAppName("3uairetn1");//设置服务名称
 		
