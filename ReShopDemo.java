@@ -21,8 +21,6 @@ import com.travelsky.ebuild.clientapi.reshop.ReShopRequest;
 import com.travelsky.ebuild.clientapi.reshop.ReissueFlight;
 import com.travelsky.ebuild.clientapi.reshop.ReissueSector;
 import com.travelsky.ebuild.clientapi.reshop.Request;
-import com.travelsky.ebuild.clientapi.reshop.Reshop;
-import com.travelsky.ebuild.clientapi.reshop.TravelPreferences;
 
 public class ReShopDemo {
 	public static void main(String[] args) {
